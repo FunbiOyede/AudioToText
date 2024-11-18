@@ -36,11 +36,13 @@ def upload_file():
 def get_file():
 
     files = os.listdir(app.config['UPLOAD_FOLDER'])
-
+    content = ''
+    
     for file in files:
         file_path = f'{BASE_DIRECTORY}/{file}'
-        content = read_file_content(file_path)
-        print(content)
+        print(file_path)
+        file_content = read_file_content(file_path)
+        content +=  file_content
 
     return jsonify({'message': f'The content of the file is  - {content}'}), 200
 
