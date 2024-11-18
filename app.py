@@ -1,14 +1,15 @@
 from flask import Flask, request, jsonify
 import os
+from helper import *
 
 app = Flask(__name__)
 
 # Configure upload folder
-UPLOAD_FOLDER = 'uploads'
+BASE_DIRECTORY = 'uploads'
 
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(BASE_DIRECTORY, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = BASE_DIRECTORY
 
 @app.route('/')
 def index():
@@ -27,16 +28,21 @@ def upload_file():
         return jsonify({'message': 'No file is selected'})
     
     # Save the file
-    f.save(os.path.join(app.config['UPLOAD_FOLDER'], f.filename))
+    f.save(os.path.join(BASE_DIRECTORY, f.filename))
     return jsonify({'message': 'File uploaded successfully'})
 
 
-@app.route('/document', methods=['GET'])
+@app.route('/content', methods=['GET'])
 def get_file():
 
     files = os.listdir(app.config['UPLOAD_FOLDER'])
-    return jsonify({'message': f'The first file in the folders is - {files[0]}'}), 200
 
+    for file in files:
+        file_path = f'{BASE_DIRECTORY}/{file}'
+        content = read_file_content(file_path)
+        print(content)
+
+    return jsonify({'message': f'The content of the file is  - {content}'}), 200
 
 
 
