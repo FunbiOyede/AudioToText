@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from helper import *
-
+import os
+import uuid
 
 app = Flask(__name__)
 
@@ -31,11 +32,19 @@ def upload_file():
     
     # Ensure a file is selected
     if f.filename == '':
-        return jsonify({'message': 'No file is selected'})
+        return jsonify({'message': 'No file is selected'}), 400
     
+    if not allowed_file(f.filename):
+        return jsonify({'message': 'Invalid file type. Only .txt files allowed.'}), 400
+
     # Save the file
-    f.save(os.path.join(BASE_DIRECTORY, f.filename))
-    return jsonify({'message': 'File uploaded successfully'}), 200
+    try:
+        f.save(os.path.join(BASE_DIRECTORY, generate_unique_id(f.filename)))
+        return jsonify({'message': 'File uploaded successfully'}), 200
+    
+    except Exception as e:
+
+        return jsonify({'Message':'File upload error', 'Error':  str(e)}), 500
 
 
 @app.route('/content', methods=['GET'])
@@ -46,7 +55,7 @@ def get_file():
 
     for file in files:
         file_path = f'{BASE_DIRECTORY}/{file}'
-        audio_file_url = f'{AUDIO_BASE_DIRECTORY}/{file}.mp3'
+        audio_file_url = f'{AUDIO_BASE_DIRECTORY}/generate_unique_id({file}.mp3'
 
         file_content = read_file_content(file_path)
         convert_text_to_speech(file_content,audio_file_url)
