@@ -56,7 +56,8 @@ def get_file():
         file_path = f'{BASE_DIRECTORY}/{file}'
         audio_file_url = f'{AUDIO_BASE_DIRECTORY}/generate_unique_id({file}.mp3'
 
-        file_content = read_file_content(file_path)
+        file_ext = file_extension(file_path)
+        file_content = read_file_content(file_path) if file_ext == 'txt' else pdf_reader(file_path)
         convert_text_to_speech(file_content,audio_file_url)
 
         content +=  file_content
