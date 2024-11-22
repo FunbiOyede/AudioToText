@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from helper import *
 import os
-import uuid
 
 app = Flask(__name__)
 
