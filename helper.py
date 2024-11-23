@@ -1,13 +1,11 @@
 from dotenv import load_dotenv
 import os
-import openai
 import uuid
 from typing import Dict
 import pymupdf
 
 load_dotenv()
 
-openai.api_key = os.getenv('API_KEY')
 
 
 
@@ -42,8 +40,8 @@ def pdf_reader(file):
         print(f'Unable to extract text from pdf')
 
 
-def convert_text_to_speech(content, file_url):
-    response = openai.audio.speech.create(
+def convert_text_to_speech(content, file_url, client):
+    response = client.audio.speech.create(
         model="tts-1",
         voice="alloy",
         input=content
@@ -51,6 +49,22 @@ def convert_text_to_speech(content, file_url):
     with open(file_url, 'wb') as audio_file:
         audio_file.write(response.content)
 
+
+def generate_audio(BASE_DIRECTORY, AUDIO_BASE_DIRECTORY, client):
+    files = os.listdir(BASE_DIRECTORY)
+    content = ''
+
+    for file in files:
+        file_path = f'{BASE_DIRECTORY}/{file}'
+        audio_file_url = f'{AUDIO_BASE_DIRECTORY}/generate_unique_id({file}.mp3'
+
+        file_ext = file_extension(file_path)
+        file_content = read_file_content(file_path) if file_ext == 'txt' else pdf_reader(file_path)
+        convert_text_to_speech(file_content,audio_file_url, client)
+
+        content +=  file_content
+
+    return content 
 
 
     

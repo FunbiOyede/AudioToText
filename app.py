@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from helper import *
 import os
+import openai
+openai.api_key = os.getenv('API_KEY')
 
 app = Flask(__name__)
 
@@ -49,19 +51,8 @@ def upload_file():
 @app.route('/content', methods=['GET'])
 def get_file():
 
-    files = os.listdir(BASE_DIRECTORY)
-    content = ''
+    content = generate_audio(BASE_DIRECTORY, AUDIO_BASE_DIRECTORY, openai)
 
-    for file in files:
-        file_path = f'{BASE_DIRECTORY}/{file}'
-        audio_file_url = f'{AUDIO_BASE_DIRECTORY}/generate_unique_id({file}.mp3'
-
-        file_ext = file_extension(file_path)
-        file_content = read_file_content(file_path) if file_ext == 'txt' else pdf_reader(file_path)
-        convert_text_to_speech(file_content,audio_file_url)
-
-        content +=  file_content
-    
     return jsonify({'message': f'The content of the file is  - {content}'}), 200
 
 
