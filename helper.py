@@ -1,8 +1,9 @@
 from dotenv import load_dotenv
 import os
 import uuid
-from typing import Dict
 import pymupdf
+import logging
+import requests
 
 load_dotenv()
 
@@ -11,60 +12,59 @@ load_dotenv()
 
 ALLOWED_EXTENSIONS = {'txt', 'pdf'}
 
-def allowed_file(filename) -> Dict[str, str]:
+def is_file_extension_valid(filename:str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def file_extension(filename):
+def get_file_extension(filename:str) -> str:
     return filename.rsplit('.', 1)[1].lower()
 
-def generate_unique_id(file_name) -> str:
+def generate_unique_id(file_name:str) -> str:
     return f"{uuid.uuid4()}_{file_name}"
 
-def read_file_content(file):
+
+def read_txt_file_content(file_path:str) -> str:
     try:
-        with open(file, 'r') as f:
+        with open(file_path, 'r') as f:
             content = f.read()
             return content
     except Exception as e:
-        print(f'File processing error {str(e)}')
+        logging.info(f'Unable to extract text from txt {str(e)}')
 
-def pdf_reader(file):
+
+def read_pdf_file_content(file_path:str) -> str:
     text = ''
     try:
-        doc = pymupdf.open(file)
+        doc = pymupdf.open(file_path)
         for page in doc:
             text = page.get_text()
         return text
     except Exception as e:
-        print(f'Unable to extract text from pdf')
+        logging.info(f'Unable to extract text from pdf- {e}')
 
 
-def convert_text_to_speech(content, file_url, client):
-    response = client.audio.speech.create(
+def convert_text_to_speech(content:str, client:any):
+
+    try:
+        response = client.audio.speech.create(
         model="tts-1",
         voice="alloy",
         input=content
-    )
-    with open(file_url, 'wb') as audio_file:
-        audio_file.write(response.content)
+        )
+        return response.content
+    except requests.exceptions.HTTPError as e:
+        logging.info(f"HTTP error: {e}")
 
 
-def generate_audio(BASE_DIRECTORY, AUDIO_BASE_DIRECTORY, client):
-    files = os.listdir(BASE_DIRECTORY)
-    content = ''
+def write_audio_to_file(data:any, file_url:str):
+    
+    try:
 
-    for file in files:
-        file_path = f'{BASE_DIRECTORY}/{file}'
-        audio_file_url = f'{AUDIO_BASE_DIRECTORY}/generate_unique_id({file}.mp3'
+        with open(file_url, 'wb') as audio_file:
+            audio_file.write(data)
 
-        file_ext = file_extension(file_path)
-        file_content = read_file_content(file_path) if file_ext == 'txt' else pdf_reader(file_path)
-        convert_text_to_speech(file_content,audio_file_url, client)
-
-        content +=  file_content
-
-    return content 
+    except Exception as e:
+        logging.info(f'Unable to write audio to file{e}')
 
 
     
