@@ -1,7 +1,13 @@
 from flask import Flask, request, jsonify
 from helper import *
+from service import *
 import os
+import boto3
+import logging
 import openai
+
+s3_client = boto3.client('s3')
+
 openai.api_key = os.getenv('API_KEY')
 
 app = Flask(__name__)
@@ -61,21 +67,16 @@ def upload_file():
 
     # Save the file
     try:
-        app.logger.info("Uploading File.....")
+        logging.info("Uploading Text File.....")
         f.save(os.path.join(BASE_DIRECTORY, generate_unique_id(f.filename)))
-        return jsonify({'message': 'File uploaded successfully'}), 200
+        
+        logging.info("Generating audio file")
+        content = process_audio(BASE_DIRECTORY, AUDIO_BASE_DIRECTORY, openai)
+        return jsonify({'message': 'File uploaded successfully', 'data': f'{content}'}), 200
     
     except Exception as e:
 
         return jsonify({'Message':'File upload error', 'Error':  str(e)}), 500
-
-
-@app.route('/content', methods=['GET'])
-def get_file():
-
-    app.logger.info("Generating Audio.....")
-    content = process_audio(BASE_DIRECTORY, AUDIO_BASE_DIRECTORY, openai)
-    return jsonify({'message': f'The content of the file is  - {content}'}), 200
 
 
 if __name__ == "__main__":
