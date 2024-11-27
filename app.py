@@ -26,6 +26,7 @@ os.makedirs(BASE_DIRECTORY, exist_ok=True)
 os.makedirs(AUDIO_BASE_DIRECTORY, exist_ok=True)
 
 
+
 def generate_audio(BASE_DIRECTORY:str, AUDIO_BASE_DIRECTORY:str, client:any) -> str:
 
     files = os.listdir(BASE_DIRECTORY)
@@ -45,7 +46,6 @@ def generate_audio(BASE_DIRECTORY:str, AUDIO_BASE_DIRECTORY:str, client:any) -> 
         return audio_file_url
     
     return None
-
 
 
 
@@ -76,7 +76,7 @@ def upload_file():
         f.save(os.path.join(BASE_DIRECTORY, generate_unique_id(f.filename)))
         
         logging.info("Generating audio file")
-
+        
         audio_file_url = generate_audio(BASE_DIRECTORY, AUDIO_BASE_DIRECTORY, openai)
         
         logging.debug("Uploading to S3 bucket")
