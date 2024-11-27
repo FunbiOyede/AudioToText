@@ -12,7 +12,7 @@ load_dotenv()
 ALLOWED_EXTENSIONS = {'txt', 'pdf'}
 
 def is_file_extension_valid(filename:str) -> bool:
-    
+
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
@@ -63,13 +63,15 @@ def convert_text_to_speech(content:str, client:any):
         logging.info(f"HTTP error: {e}")
 
 
-def write_audio_to_file(data:any, file_url:str):
+def write_audio_to_file(data:any, file_url:str) -> bool:
     
     try:
 
         with open(file_url, 'wb') as audio_file:
             audio_file.write(data)
+        return True
 
     except Exception as e:
         logging.info(f'Unable to write audio to file{e}')
+        return False
 

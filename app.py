@@ -1,14 +1,17 @@
 from flask import Flask, request, jsonify
 from helper import *
-from service import *
+from aws_service import *
 import os
 import boto3
 import logging
 import openai
+import traceback
 
 s3_client = boto3.client('s3')
 
 openai.api_key = os.getenv('API_KEY')
+
+bucket = os.getenv('BUCKET_NAME')
 
 app = Flask(__name__)
 
@@ -23,24 +26,26 @@ os.makedirs(BASE_DIRECTORY, exist_ok=True)
 os.makedirs(AUDIO_BASE_DIRECTORY, exist_ok=True)
 
 
-def process_audio(BASE_DIRECTORY:str, AUDIO_BASE_DIRECTORY:str, client:any) -> str:
+def generate_audio(BASE_DIRECTORY:str, AUDIO_BASE_DIRECTORY:str, client:any) -> str:
 
     files = os.listdir(BASE_DIRECTORY)
-    content = ''
+    is_audio_uploaded = ''
 
     for file in files:
         file_path = f'{BASE_DIRECTORY}/{file}'
-        audio_file_url = f'{AUDIO_BASE_DIRECTORY}/generate_unique_id({file}.mp3'
-
+        unique_id = generate_unique_id(file)
+        audio_file_url = f'{AUDIO_BASE_DIRECTORY}/{unique_id}.mp3'
         file_ext = get_file_extension(file_path)
         file_content = read_txt_file_content(file_path) if file_ext == 'txt' else read_pdf_file_content(file_path)
 
         response = convert_text_to_speech(file_content, client)
-        write_audio_to_file(response, audio_file_url)
+        is_audio_uploaded = write_audio_to_file(response, audio_file_url)
 
-        content +=  file_content
+    if is_audio_uploaded is True:
+        return audio_file_url
+    
+    return None
 
-    return content 
 
 
 
@@ -71,8 +76,13 @@ def upload_file():
         f.save(os.path.join(BASE_DIRECTORY, generate_unique_id(f.filename)))
         
         logging.info("Generating audio file")
-        content = process_audio(BASE_DIRECTORY, AUDIO_BASE_DIRECTORY, openai)
-        return jsonify({'message': 'File uploaded successfully', 'data': f'{content}'}), 200
+
+        audio_file_url = generate_audio(BASE_DIRECTORY, AUDIO_BASE_DIRECTORY, openai)
+        
+        logging.debug("Uploading to S3 bucket")
+        response = upload_to_s3(s3_client, audio_file_url, bucket) if audio_file_url else ''
+
+        return jsonify({'message': response['message'], 'url': response['url']}), 200
     
     except Exception as e:
 
