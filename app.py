@@ -52,7 +52,7 @@ def generate_audio(BASE_DIRECTORY:str, AUDIO_BASE_DIRECTORY:str, client:any) -> 
 
 @app.route('/')
 def index():
-    return  jsonify({'Message': 'Hello TextToAudio API'})
+    return  jsonify({'Message': 'Hello TextToAudio API'}), 200
 
 
 @app.route('/upload', methods=['POST'])
